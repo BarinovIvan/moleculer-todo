@@ -1,19 +1,33 @@
 const DbMixin = require('../mixins/db.mixin');
-const { getCurrentFormattedDate } = require('../utils/todo.utils');
-
+const { DataTypes } = require('sequelize');
 
 module.exports = {
 	name: 'todos',
-	mixins: [DbMixin('todos')],
+	mixins: [DbMixin({ collection: 'todos'})],
 
-	/**
-	 * Settings
-	 */
-	settings: {
-		fields: ['_id', 'title', 'completed', 'date'],
-		entityValidator: {
-			title: 'string|min:3',
-			completed: 'boolean'
+	model: {
+		name: 'todos',
+		define: {
+			id: {
+				type: DataTypes.UUID,
+				primaryKey: true,
+				defaultValue: DataTypes.UUIDV4,
+				allowNull: false
+			},
+			title: {
+				type: DataTypes.STRING,
+				allowNull: false
+			},
+			completed: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false
+			},
+			date: {
+				type: DataTypes.DATE,
+				defaultValue: DataTypes.NOW
+			}
+		},
+		options: {
 		}
 	},
 
@@ -26,22 +40,7 @@ module.exports = {
 		}
 	},
 
-
-
 	actions: {
-		add: {
-			rest: 'POST /add',
-			params: {
-				title: 'string|min:3',
-				completed: { type: 'boolean', optional: true },
-			},
-			async handler(ctx) {
-				ctx.params.completed = ctx.params.completed || false;
-				ctx.params.date = getCurrentFormattedDate();
-				const result = await this.adapter.insert(ctx.params);
-				return result;
-			}
-		},
 		list: {
 			rest: 'GET /',
 			params: {
@@ -68,17 +67,53 @@ module.exports = {
 				};
 			}
 		},
+		find: {
+			rest: 'POST /find',
+			params: {
+				id: 'string'
+			},
+			async handler({ params }) {
+				return await this.adapter.findById(params.id);
+			}
+		},
+		edit: {
+			rest: 'POST /edit',
+			params: {
+				id: 'string',
+				title: {type: 'string', optional: true},
+				completed: { type: 'boolean', optional: true },
+			},
+			async handler({ params }) {
+				return await this.adapter.updateById(params.id, { $set: { ...params } });
+			}
+		},
+		remove: {
+			rest: 'POST /remove',
+			params: {
+				id: 'string'
+			},
+			async handler({ params }) {
+				return await this.adapter.removeById(params.id);
+			}
+		},
+		add: {
+			rest: 'POST /add',
+			params: {
+				title: 'string|min:3',
+				completed: { type: 'boolean', optional: true },
+			},
+			async handler({ params }) {
+				params.completed = params.completed || false;
+				return await this.adapter.insert({...params});
+			}
+		},
 		check: {
 			rest: 'POST /check',
 			params: {
 				id: 'string'
 			},
 			async handler({params}) {
-				return await this.adapter.updateById(params.id, {
-					$set: {
-						completed: true
-					}
-				});
+				return await this.adapter.updateById(params.id, { $set: { completed: true } });
 			}
 		},
 		uncheck: {
@@ -87,21 +122,16 @@ module.exports = {
 				id: 'string'
 			},
 			async handler({params}) {
-				console.log(await this.adapter.findById(params.id));
-				return await this.adapter.updateById(params.id, {
-					$set: {
-						completed: false
-					}
-				});
+				return await this.adapter.updateById(params.id, { $set: { completed: false } });
 			}
 		}
 	},
 	methods: {
 		async seedDB() {
 			await this.adapter.insertMany([
-				{ title: 'Купить молоко', completed: false },
-				{ title: 'Зайти в парикмахерскую', completed: false },
-				{ title: 'Написать по поводу заказа', completed: false },
+				{ title: 'Купить молоко' },
+				{ title: 'Зайти в парикмахерскую' },
+				{ title: 'Написать по поводу заказа' },
 			]);
 		}
 	},

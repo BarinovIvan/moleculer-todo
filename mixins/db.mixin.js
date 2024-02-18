@@ -1,61 +1,38 @@
-"use strict";
+'use strict';
 
-const fs = require("fs");
-const DbService	= require("moleculer-db");
+const fs = require('fs');
+const DbService	= require('moleculer-db');
+const SequelizeAdapter = require('moleculer-db-adapter-sequelize');
+const { Pool } = require('pg');
 
-module.exports = function(collection) {
+module.exports = function({ collection }) {
 	const cacheCleanEventName = `cache.clean.${collection}`;
 
 	const schema = {
 		mixins: [DbService],
 
-		// events: {
-		// 	async [cacheCleanEventName]() {
-		// 		if (this.broker.cacher) {
-		// 			await this.broker.cacher.clean(`${this.fullName}.*`);
-		// 		}
-		// 	}
-		// },
-
-		// methods: {
-		// 	async entityChanged(type, json, ctx) {
-		// 		ctx.broadcast(cacheCleanEventName);
-		// 	}
-		// },
+		adapter: new SequelizeAdapter(
+			'postgresql://postgres:1234@localhost:5432',
+			{
+				dialect: 'postgres',
+				define: {
+					freezeTableName: true,
+					timestamps: false
+				}
+			}
+		),
 
 		async started() {
-			// Check the count of items in the DB. If it's empty,
-			// call the `seedDB` method of the service.
 			if (this.seedDB) {
 				const count = await this.adapter.count();
-				if (count == 0) {
+				if (count === 0) {
 					this.logger.info(`The '${collection}' collection is empty. Seeding the collection...`);
 					await this.seedDB();
-					this.logger.info("Seeding is done. Number of records:", await this.adapter.count());
+					this.logger.info('Seeding is done. Number of records:', await this.adapter.count());
 				}
 			}
 		}
 	};
-
-	if (process.env.MONGO_URI) {
-		// Mongo adapter
-		const MongoAdapter = require("moleculer-db-adapter-mongo");
-
-		schema.adapter = new MongoAdapter(process.env.MONGO_URI);
-		schema.collection = collection;
-	} else if (process.env.NODE_ENV === "test") {
-		// NeDB memory adapter for testing
-		schema.adapter = new DbService.MemoryAdapter();
-	} else {
-		// NeDB file DB adapter
-
-		// Create data folder
-		if (!fs.existsSync("./data")) {
-			fs.mkdirSync("./data");
-		}
-
-		schema.adapter = new DbService.MemoryAdapter({ filename: `./data/${collection}.db` });
-	}
 
 	return schema;
 };

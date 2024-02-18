@@ -25,11 +25,16 @@
     "moleculer-repl": "^0.7.3"
   },
   "dependencies": {
-    "moleculer-web": "^0.10.4",
+    "install": "^0.13.0",
+    "moleculer": "^0.14.26",
     "moleculer-db": "^0.8.20",
-    "moleculer-db-adapter-mongo": "^0.4.15",
+    "moleculer-db-adapter-sequelize": "^0.2.16",
+    "moleculer-web": "^0.10.4",
     "nats": "^2.7.1",
-    "moleculer": "^0.14.26"
+    "npm": "^10.4.0",
+    "pg": "^8.11.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.36.0"
   },
   "engines": {
     "node": ">= 16.x.x"
