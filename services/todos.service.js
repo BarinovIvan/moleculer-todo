@@ -35,9 +35,14 @@ module.exports = {
 		before: {
 			create(ctx) {
 				ctx.params.completed = ctx.params.completed || false;
-				ctx.params.date = getCurrentFormattedDate();
-			}
-		}
+			},
+			find: ['checkIdExists'],
+			edit: ['checkIdExists'],
+			check: ['checkIdExists'],
+			uncheck: ['checkIdExists'],
+			remove: ['checkIdExists']
+		},
+
 	},
 
 	actions: {
@@ -133,6 +138,13 @@ module.exports = {
 				{ title: 'Зайти в парикмахерскую' },
 				{ title: 'Написать по поводу заказа' },
 			]);
+		},
+		async checkIdExists(ctx) {
+			const { id } = ctx.params;
+			const item = await this.adapter.findById(id);
+			if (!item) {
+				throw new Error(`Сущность с ID '${id}' не существует`);
+			}
 		}
 	},
 };
