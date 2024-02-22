@@ -25,7 +25,9 @@
     "moleculer-repl": "^0.7.3"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "install": "^0.13.0",
+    "jsonwebtoken": "^9.0.2",
     "moleculer": "^0.14.26",
     "moleculer-db": "^0.8.20",
     "moleculer-db-adapter-sequelize": "^0.2.16",
