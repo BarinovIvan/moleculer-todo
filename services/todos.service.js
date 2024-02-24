@@ -1,6 +1,7 @@
 const DbMixin = require('../mixins/db.mixin');
 const { DataTypes } = require('sequelize');
 const {getPaginationOffsetAndLimit} = require('../utils/todo.utils');
+const { MoleculerClientError } = require('moleculer').Errors;
 
 module.exports = {
 	name: 'todos',
@@ -147,7 +148,7 @@ module.exports = {
 			const { id } = ctx.params;
 			const item = await this.adapter.findById(id);
 			if (!item) {
-				throw new Error(`Todo with ID '${id}' does not exist`);
+				throw new MoleculerClientError(`Todo with ID '${id}' does not exist`, 404);
 			}
 		}
 	},
