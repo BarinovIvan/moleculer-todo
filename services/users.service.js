@@ -31,6 +31,9 @@ module.exports = {
 			}
 		},
 		options: {
+			defaultScope: {
+				attributes: { exclude: ['password'] },
+			},
 		}
 	},
 
