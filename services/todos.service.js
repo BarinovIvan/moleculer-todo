@@ -1,5 +1,6 @@
 const DbMixin = require('../mixins/db.mixin');
 const { DataTypes } = require('sequelize');
+const {getPaginationOffsetAndLimit} = require('../utils/todo.utils');
 
 module.exports = {
 	name: 'todos',
@@ -52,9 +53,8 @@ module.exports = {
 				page: { type: 'number', min: 1, integer: true, optional: true, default: 1 },
 				pageSize: { type: 'number', min: 1, integer: true, optional: true, default: 5 }
 			},
-			async handler({params}) {
-				const offset = (params.page - 1) * params.pageSize;
-				const limit = params.pageSize;
+			async handler({ params }) {
+				const { offset, limit } = getPaginationOffsetAndLimit({ page: params.page, pageSize: params.pageSize });
 
 				const [result, total] = await Promise.all([
 					this.adapter.find({ limit, offset, sort: ['date'] }),
@@ -143,7 +143,7 @@ module.exports = {
 			const { id } = ctx.params;
 			const item = await this.adapter.findById(id);
 			if (!item) {
-				throw new Error(`Сущность с ID '${id}' не существует`);
+				throw new Error(`Todo with ID '${id}' does not exist`);
 			}
 		}
 	},

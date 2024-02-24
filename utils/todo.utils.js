@@ -1,5 +1,8 @@
-function getCurrentFormattedDate(params) {
-	return  new Date().toISOString().split('T')[0];
+function getPaginationOffsetAndLimit({ page, pageSize }) {
+	const offset = (page - 1) * pageSize;
+	const limit = pageSize;
+
+	return { offset, limit };
 }
 
-module.exports = { getCurrentFormattedDate };
+module.exports = { getPaginationOffsetAndLimit };

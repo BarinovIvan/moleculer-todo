@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const DbMixin = require('../mixins/db.mixin');
 const {DataTypes} = require('sequelize');
+const {getPaginationOffsetAndLimit} = require('../utils/todo.utils');
 
 module.exports = {
 	name: 'users',
@@ -111,8 +112,8 @@ module.exports = {
 				pageSize: { type: 'number', min: 1, integer: true, optional: true, default: 5 }
 			},
 			async handler({params}) {
-				const offset = (params.page - 1) * params.pageSize;
-				const limit = params.pageSize;
+				const { offset, limit } = getPaginationOffsetAndLimit({ page: params.page, pageSize: params.pageSize });
+
 
 				const [result, total] = await Promise.all([
 					this.adapter.find({ limit, offset }),
