@@ -44,24 +44,10 @@ module.exports = {
 	methods: {
 		async authenticate(ctx, route, req) {
 			if (req.url === '/users/login') {
-				console.log('Bypassing the authentication for logging in');
 				return;
 			}
 
-			let token;
-			const cookieHeader = req.headers.cookie;
-			if (!cookieHeader) {
-				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
-			}
-
-			const cookies = cookieHeader.split(';').map(cookie => cookie.trim());
-			const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
-			if (tokenCookie) {
-				token = tokenCookie.split('=')[1];
-			} else {
-				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
-			}
-
+			const token = this.getTokenFromCookie(req.headers.cookie);
 			const user = await ctx.call('users.resolveToken', { token });
 			if (user) {
 				ctx.meta.user = user;
@@ -69,7 +55,22 @@ module.exports = {
 			} else {
 				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_INVALID_TOKEN);
 			}
-
 		},
+		getTokenFromCookie (cookiesHeader) {
+			if (!cookiesHeader) {
+				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
+			}
+
+			let token;
+			const cookies = cookiesHeader.split(';').map(cookie => cookie.trim());
+			const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
+			if (tokenCookie) {
+				token = tokenCookie.split('=')[1];
+			} else {
+				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
+			}
+
+			return token;
+		}
 	}
 };
