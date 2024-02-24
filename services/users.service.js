@@ -10,7 +10,7 @@ const {getPaginationOffsetAndLimit} = require('../utils/todo.utils');
 module.exports = {
 	name: 'users',
 	mixins: [
-		DbMixin('users'),
+		DbMixin({ collection: 'users' }),
 	],
 
 	model: {
@@ -52,7 +52,7 @@ module.exports = {
 				let entity = ctx.params.user;
 				await this.validateUserNotExist(entity.username);
 				entity.password = bcrypt.hashSync(entity.password, 10);
-				const createdUser = await this.createUser(entity);
+				const createdUser = await this.insertUser(entity);
 				return {
 					message: 'User is successfully created',
 					user: createdUser
@@ -148,7 +148,7 @@ module.exports = {
 		async checkIfDatabaseIsEmpty() {
 			const isUsersTableEmpty = await this.adapter.count() === 0;
 			if (isUsersTableEmpty) {
-				throw new MoleculerClientError('There is no user in users table. Please add a user to the database table manually before trying to login', 403);
+				throw new MoleculerClientError('There are no users in users table. Please add a user to the database table manually or restart the moleculer project before trying to login in again', 403);
 			}
 		},
 		async validateUserNotExist(username) {
@@ -158,7 +158,7 @@ module.exports = {
 			}
 		},
 
-		async createUser(entity) {
+		async insertUser(entity) {
 			const { dataValues: createdUser } = await this.adapter.insert(entity);
 			return createdUser;
 		},
