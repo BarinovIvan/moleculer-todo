@@ -15,6 +15,7 @@ module.exports = function({ collection }) {
 			'postgresql://postgres:1234@localhost:5432',
 			{
 				dialect: 'postgres',
+				logging: false,
 				define: {
 					freezeTableName: true,
 					timestamps: false
