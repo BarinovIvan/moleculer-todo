@@ -14,10 +14,25 @@ module.exports = {
 				whitelist: [
 					'**'
 				],
+				aliases: {
+					'GET /users': 'users.list',
+					'POST /users/login': 'users.login',
+					'POST /users/logout': 'users.logout',
+					'DELETE /users/delete': 'users.delete',
+					'POST /users/add': 'users.add',
+					'POST /users/getUser': 'users.getUser',
+
+					'GET /todos': 'todos.list',
+					'POST /todos/add': 'todos.add',
+					'POST /todos/check': 'todos.check',
+					'POST /todos/uncheck': 'todos.uncheck',
+					'POST /todos/find': 'todos.find',
+					'POST /todos/edit': 'todos.edit',
+					'POST /todos/remove': 'todos.remove',
+				},
 				mergeParams: true,
 				authentication: true,
 				authorization: false,
-				autoAliases: true,
 				bodyParsers: {
 					json: {
 						strict: false,
