@@ -74,6 +74,7 @@ module.exports = {
 				password: { type: 'string', min: 1 }
 			},
 			async handler(ctx) {
+				await this.checkIfDatabaseIsEmpty();
 				const entity = ctx.params;
 				const user = await this.adapter.findOne({ where: { username: entity.username } });
 				if (!user) {
@@ -141,6 +142,13 @@ module.exports = {
 	},
 
 	methods: {
+		async checkIfDatabaseIsEmpty() {
+			const isUsersTableEmpty = await this.adapter.count() === 0;
+			if (isUsersTableEmpty) {
+				throw new MoleculerClientError('There is no user in users table. Please add a user to the database table manually before trying to login', 403);
+			}
+		},
+			console.log('foundUser :', foundUser);
 		generateJWT(user) {
 			const today = new Date();
 			const exp = new Date(today);
