@@ -53,6 +53,7 @@ module.exports = {
 				await this.validateUserNotExist(entity.username);
 				entity.password = bcrypt.hashSync(entity.password, 10);
 				const createdUser = await this.insertUser(entity);
+				delete createdUser.password; // remove hashed password from 'add' action request
 				return {
 					message: 'User is successfully created',
 					user: createdUser
