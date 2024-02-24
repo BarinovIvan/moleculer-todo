@@ -69,11 +69,17 @@ module.exports = {
 			async handler(ctx) {
 				await this.checkIfDatabaseIsEmpty();
 				const entity = ctx.params;
-				const user = await this.findUserByUsername({
-					username: entity.username,
-					withPassword: true
-				});
-				await this.verifyPassword(entity.password, user.password);
+				let user;
+				try {
+					user = await this.findUserByUsername({
+						username: entity.username,
+						withPassword: true
+					});
+					await this.verifyPassword(entity.password, user.password);
+				} catch (error) {
+					throw new MoleculerClientError('Wrong username or password!', 422);
+				}
+
 				const token = this.generateJWTToken(user);
 				this.setTokenInCookie({ ctx, token });
 				return { message: 'Successfully logged in' };
@@ -185,7 +191,7 @@ module.exports = {
 		async verifyPassword(plain, hashed) {
 			const res = await bcrypt.compare(plain, hashed);
 			if (!res) {
-				throw new MoleculerClientError('Wrong password!', 422);
+				throw new Error;
 			}
 		},
 		generateJWTToken(user) {
