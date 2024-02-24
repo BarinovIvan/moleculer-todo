@@ -98,7 +98,11 @@ module.exports = {
 				id: 'string'
 			},
 			async handler({ params }) {
-				return await this.adapter.removeById(params.id);
+				const deletedTodo = await this.adapter.removeById(params.id);
+				return {
+					message: 'Successfully deleted todo',
+					deletedTodo
+				};
 			}
 		},
 		add: {
