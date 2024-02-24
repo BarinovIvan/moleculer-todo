@@ -215,6 +215,12 @@ module.exports = {
 			ctx.meta.$responseHeaders = {
 				'Set-Cookie': 'token=; HttpOnly; Path=/; Max-Age=0'
 			};
+		},
+
+		async addDefaultUser () {
+			const defaultUser = { username: 'admin', password: 'admin' };
+			defaultUser.password = bcrypt.hashSync(defaultUser.password, 10);
+			await this.insertUser(defaultUser);
 		}
 	}
 };

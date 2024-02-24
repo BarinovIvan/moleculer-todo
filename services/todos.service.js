@@ -132,7 +132,7 @@ module.exports = {
 		}
 	},
 	methods: {
-		async seedDB() {
+		async seedTodosTable() {
 			await this.adapter.insertMany([
 				{ title: 'Купить молоко' },
 				{ title: 'Зайти в парикмахерскую' },

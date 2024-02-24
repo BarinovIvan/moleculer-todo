@@ -1,12 +1,13 @@
 'use strict';
 
-const fs = require('fs');
 const DbService	= require('moleculer-db');
 const SequelizeAdapter = require('moleculer-db-adapter-sequelize');
-const { Pool } = require('pg');
 
 module.exports = function({ collection }) {
-	const cacheCleanEventName = `cache.clean.${collection}`;
+	const seedMethods = new Map([
+		['todos', 'seedTodosTable'],
+		['users', 'addDefaultUser'],
+	]);
 
 	const schema = {
 		mixins: [DbService],
@@ -24,12 +25,15 @@ module.exports = function({ collection }) {
 		),
 
 		async started() {
-			if (this.seedDB) {
-				const count = await this.adapter.count();
-				if (count === 0) {
-					this.logger.info(`The '${collection}' collection is empty. Seeding the collection...`);
-					await this.seedDB();
-					this.logger.info('Seeding is done. Number of records:', await this.adapter.count());
+			const count = await this.adapter.count();
+			if (count === 0) {
+				this.logger.info(`The '${collection}' collection is empty. Seeding the collection...`);
+				const seedMethod = seedMethods.get(collection);
+				if (seedMethod && typeof this[seedMethod] === 'function') {
+					await this[seedMethod]();
+					this.logger.info(`Seeding collection '${collection}' is done. Number of records: ${await this.adapter.count()}`);
+				} else {
+					this.logger.warn(`No seed method defined for the '${collection}' collection.`);
 				}
 			}
 		}
