@@ -1,42 +1,37 @@
-[![Moleculer](https://badgen.net/badge/Powered%20by/Moleculer/0e83cd)](https://moleculer.services)
-
-# my-moleculer-todo
-This is a [Moleculer](https://moleculer.services/)-based microservices project. Generated with the [Moleculer CLI](https://moleculer.services/docs/0.14/moleculer-cli.html).
-
-## Usage
-Start the project with `npm run dev` command. 
-After starting, open the http://localhost:3000/ URL in your browser. 
-On the welcome page you can test the generated services via API Gateway and check the nodes & services.
-
-In the terminal, try the following commands:
-- `nodes` - List all connected nodes.
-- `actions` - List all registered service actions.
-- `call greeter.hello` - Call the `greeter.hello` action.
-- `call greeter.welcome --name John` - Call the `greeter.welcome` action with the `name` parameter.
-- `call products.list` - List the products (call the `products.list` action).
+[![Moleculer](https://badgen.net/badge/Powered%20by/Moleculer/0e83cd)](https://moleculer.services) [![PostgreSQL](https://img.shields.io/badge/Powered%20by-PostgreSQL-316192?style=flat&logo=Postgresql&logoColor=white)](https://www.postgresql.org)
 
 
-## Services
-- **api**: API Gateway services
-- **greeter**: Sample service with `hello` and `welcome` actions.
-- **products**: Sample DB service. To use with MongoDB, set `MONGO_URI` environment variables and install MongoDB adapter with `npm i moleculer-db-adapter-mongo`.
+# Moleculer-todo
+**_Moleculer-todo_** это микросервисный проект по работе со списком задач (todo), написанный с помощью фреймворка [Moleculer](https://moleculer.services/).
 
-## Mixins
-- **db.mixin**: Database access mixin for services. Based on [moleculer-db](https://github.com/moleculerjs/moleculer-db#readme)
+## Инструкция
+Для успешного запуска проекта необходимо настроить подключение к серверу postgreSQL.
+Первичная авторизация осуществляется при помощи следующих учетных данных:
+- Логин: `admin`
+- Пароль: `admin`
 
+После первого запуска проекта, базы данных **"todos"** и **"users"** будут автоматически заполнены начальными данными.
 
-## Useful links
+## Сервисы
+Проект разделен на два основных сервиса:
+1. Сервис **Todos** - предназначен для работы с задачами (todos).
+2. Сервис **Users** - отвечает за хранение данных пользователей и управление этими данными.
 
-* Moleculer website: https://moleculer.services/
-* Moleculer Documentation: https://moleculer.services/docs/0.14/
+## Список доступных методов
+### Для сервиса _Users_:
+-    **GET**  `/users` 
+-   **POST**  `/users/login`
+-   **POST**  `/users/logout`
+- **DELETE**  `/users/delete`
+-   **POST**  `/users/add`
+-   **POST**  `/users/getUser`
 
-## NPM scripts
+### Для сервиса _Todos_:
+-    **GET**   `/todos`
+-   **POST**   `/todos/add`
+-   **POST**   `/todos/check`
+-   **POST**   `/todos/uncheck`
+-   **POST**   `/todos/find`
+-   **POST**   `/todos/edit`
+-   **POST**   `/todos/remove`
 
-- `npm run dev`: Start development mode (load all services locally with hot-reload & REPL)
-- `npm run start`: Start production mode (set `SERVICES` env variable to load certain services)
-- `npm run cli`: Start a CLI and connect to production. Don't forget to set production namespace with `--ns` argument in script
-- `npm run lint`: Run ESLint
-- `npm run ci`: Run continuous test mode with watching
-- `npm test`: Run tests & generate coverage report
-- `npm run dc:up`: Start the stack with Docker Compose
-- `npm run dc:down`: Stop the stack with Docker Compose
