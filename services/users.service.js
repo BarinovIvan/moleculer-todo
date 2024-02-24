@@ -49,22 +49,13 @@ module.exports = {
 			},
 			async handler(ctx) {
 				let entity = ctx.params.user;
-				if (entity.username) {
-					const foundUser = await this.adapter.findOne({ where: { username: entity.username } });
-					if (foundUser) {
-						throw new MoleculerClientError('Username is exist!', 422);
-					}
-				}
-
+				await this.validateUserNotExist(entity.username);
 				entity.password = bcrypt.hashSync(entity.password, 10);
-
-				const { dataValues: createdUser } = await this.adapter.insert(entity);
-
-				const token = this.generateJWT(createdUser);
-				ctx.meta.$responseHeaders = {
-					'Set-Cookie': `token=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24}`
+				const createdUser = await this.createUser(entity);
+				return {
+					message: 'User is successfully created',
+					user: createdUser
 				};
-				return { message: 'Successful registered'};
 			}
 		},
 		login: {
@@ -76,36 +67,22 @@ module.exports = {
 			async handler(ctx) {
 				await this.checkIfDatabaseIsEmpty();
 				const entity = ctx.params;
-				const user = await this.adapter.findOne({ where: { username: entity.username } });
-				if (!user) {
-					throw new MoleculerClientError('Email or password is invalid!', 422);
-				}
-
-				const res = await bcrypt.compare(entity.password, user.password);
-				if (!res) {
-					throw new MoleculerClientError('Wrong password!', 422);
-				}
-
-				const token = this.generateJWT(user);
-				ctx.meta.$responseHeaders = {
-					'Set-Cookie': `token=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24}`
-				};
-
-				return { message: 'Successful login'};
+				const user = await this.findUserByUsername({
+					username: entity.username,
+					withPassword: true
+				});
+				await this.verifyPassword(entity.password, user.password);
+				const token = this.generateJWTToken(user);
+				this.setTokenInCookie({ ctx, token });
+				return { message: 'Successfully logged in' };
 			}
 		},
 		logout: {
 			rest: 'POST /users/logout',
 			async handler(ctx) {
-				ctx.meta.$responseHeaders = {
-					'Set-Cookie': 'token=; HttpOnly; Path=/; Max-Age=0'
-				};
+				this.resetTokenInCookie(ctx);
 				return { message: 'Successfully logged out' };
 			}
-		},
-
-		get: {
-			rest: 'GET /:id'
 		},
 		delete: {
 			rest: 'DELETE /delete',
@@ -113,11 +90,8 @@ module.exports = {
 				id: 'string'
 			},
 			async handler(ctx) {
-				const {id} = ctx.params;
-				const deleted = await this.adapter.removeById(id);
-				if (!deleted) {
-					throw new MoleculerClientError('User not found', 404);
-				}
+				const { id: userId } = ctx.params;
+				await this.deleteUserById(userId);
 				return { message: 'User deleted successfully' };
 			}
 		},
@@ -126,17 +100,8 @@ module.exports = {
 				token: 'string'
 			},
 			async handler(ctx) {
-				const decoded = await new this.Promise((resolve, reject) => {
-					jwt.verify(ctx.params.token, this.settings.JWT_SECRET, (err, decoded) => {
-						if (err)
-							return reject(err);
-
-						resolve(decoded);
-					});
-				});
-
-				if (decoded.id)
-					return this.getById(decoded.id);
+				const decoded = await this.decodeJWTToken(ctx.params.token);
+				return this.getById(decoded.id);
 			}
 		},
 	},
@@ -148,8 +113,43 @@ module.exports = {
 				throw new MoleculerClientError('There is no user in users table. Please add a user to the database table manually before trying to login', 403);
 			}
 		},
-			console.log('foundUser :', foundUser);
-		generateJWT(user) {
+		async validateUserNotExist(username) {
+			const foundUser = await this.adapter.findOne({ where: { username } });
+			if (foundUser) {
+				throw new MoleculerClientError('Username is exist!', 422);
+			}
+		},
+
+		async createUser(entity) {
+			const { dataValues: createdUser } = await this.adapter.insert(entity);
+			return createdUser;
+		},
+		async findUserByUsername({ username, withPassword }) {
+			const user = await this.adapter.findOne({
+				where: { username },
+				attributes: {
+					include: withPassword ? ['password'] : null
+				}
+			});
+			if (!user) {
+				throw new MoleculerClientError('User not found!', 422);
+			}
+			return user;
+		},
+		async deleteUserById(id) {
+			const deleted = await this.adapter.removeById(id);
+			if (!deleted) {
+				throw new MoleculerClientError('User not found', 404);
+			}
+		},
+
+		async verifyPassword(plain, hashed) {
+			const res = await bcrypt.compare(plain, hashed);
+			if (!res) {
+				throw new MoleculerClientError('Wrong password!', 422);
+			}
+		},
+		generateJWTToken(user) {
 			const today = new Date();
 			const exp = new Date(today);
 			exp.setDate(today.getDate() + 60);
@@ -160,13 +160,23 @@ module.exports = {
 				exp: Math.floor(exp.getTime() / 1000)
 			}, this.settings.JWT_SECRET);
 		},
-		parseCookies(cookieHeader) {
-			const list = {};
-			cookieHeader && cookieHeader.split(';').forEach((cookie) => {
-				const parts = cookie.split('=');
-				list[parts.shift().trim()] = decodeURI(parts.join('='));
+		async decodeJWTToken(token) {
+			return new Promise((resolve, reject) => {
+				jwt.verify(token, this.settings.JWT_SECRET, (err, decoded) => {
+					if (err) return reject(err);
+					resolve(decoded);
+				});
 			});
-			return list;
+		},
+		setTokenInCookie({ctx, token}) {
+			ctx.meta.$responseHeaders = {
+				'Set-Cookie': `token=${token}; HttpOnly; Path=/; Max-Age=${60 * 60 * 24}`
+			};
+		},
+		resetTokenInCookie (ctx) {
+			ctx.meta.$responseHeaders = {
+				'Set-Cookie': 'token=; HttpOnly; Path=/; Max-Age=0'
+			};
 		}
 	}
 };
