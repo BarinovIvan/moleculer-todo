@@ -104,6 +104,43 @@ module.exports = {
 				return this.getById(decoded.id);
 			}
 		},
+		list: {
+			rest: 'GET /',
+			params: {
+				page: { type: 'number', min: 1, integer: true, optional: true, default: 1 },
+				pageSize: { type: 'number', min: 1, integer: true, optional: true, default: 5 }
+			},
+			async handler({params}) {
+				const offset = (params.page - 1) * params.pageSize;
+				const limit = params.pageSize;
+
+				const [result, total] = await Promise.all([
+					this.adapter.find({ limit, offset }),
+					this.adapter.count()
+				]);
+
+				return {
+					data: result,
+					pagination: {
+						currentPage: params.page,
+						pageSize: params.pageSize,
+						totalPages: Math.ceil(total / params.pageSize),
+						total: total
+					}
+				};
+			}
+		},
+		getUser: {
+			rest: 'POST /getUser',
+			params: {
+				username: 'string'
+			},
+			async handler(ctx) {
+				return await this.findUserByUsername({
+					username: ctx.params.username,
+				});
+			}
+		},
 	},
 
 	methods: {
