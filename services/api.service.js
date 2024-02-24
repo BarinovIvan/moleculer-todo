@@ -18,11 +18,7 @@ module.exports = {
 				],
 				// Enable/disable parameter merging method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Disable-merging
 				mergeParams: true,
-
-				// Enable authentication. Implement the logic into `authenticate` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authentication
-				authentication: false,
-
-				// Enable authorization. Implement the logic into `authorize` method. More info: https://moleculer.services/docs/0.14/moleculer-web.html#Authorization
+				authentication: true,
 				authorization: false,
 
 				// The auto-alias feature allows you to declare your route alias directly in your services.
@@ -98,53 +94,37 @@ module.exports = {
 	},
 
 	methods: {
-
-		/**
-		 * Authenticate the request. It check the `Authorization` token value in the request header.
-		 * Check the token value & resolve the user by the token.
-		 * The resolved user will be available in `ctx.meta.user`
-		 *
-		 * PLEASE NOTE, IT'S JUST AN EXAMPLE IMPLEMENTATION. DO NOT USE IN PRODUCTION!
-		 *
-		 * @param {Context} ctx
-		 * @param {Object} route
-		 * @param {IncomingRequest} req
-		 * @returns {Promise}
-		 */
 		async authenticate(ctx, route, req) {
 			// Read the token from header
 			const auth = req.headers['authorization'];
-
-			if (auth && auth.startsWith('Bearer')) {
-				const token = auth.slice(7);
-
-				// Check the token. Tip: call a service which verify the token. E.g. `accounts.resolveToken`
-				if (token == '123456') {
-					// Returns the resolved user. It will be set to the `ctx.meta.user`
-					return { id: 1, name: 'John Doe' };
-
-				} else {
-					// Invalid token
-					throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_INVALID_TOKEN);
-				}
-
-			} else {
-				// No token. Throw an error or do nothing if anonymous access is allowed.
-				// throw new E.UnAuthorizedError(E.ERR_NO_TOKEN);
-				return null;
+			if (req.url === '/users/login') {
+				console.log('Bypassing the authentication for logging in');
+				return;
 			}
-		},
 
-		/**
-		 * Authorize the request. Check that the authenticated user has right to access the resource.
-		 *
-		 * PLEASE NOTE, IT'S JUST AN EXAMPLE IMPLEMENTATION. DO NOT USE IN PRODUCTION!
-		 *
-		 * @param {Context} ctx
-		 * @param {Object} route
-		 * @param {IncomingRequest} req
-		 * @returns {Promise}
-		 */
+			let token;
+			const cookieHeader = req.headers.cookie;
+			if (!cookieHeader) {
+				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
+			}
+
+			const cookies = cookieHeader.split(';').map(cookie => cookie.trim());
+			const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
+			if (tokenCookie) {
+				token = tokenCookie.split('=')[1];
+			} else {
+				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_NO_TOKEN);
+			}
+
+			const user = await ctx.call('users.resolveToken', { token });
+			if (user) {
+				ctx.meta.user = user;
+				return user;
+			} else {
+				throw new ApiGateway.Errors.UnAuthorizedError(ApiGateway.Errors.ERR_INVALID_TOKEN);
+			}
+
+		},
 		async authorize(ctx, route, req) {
 			// Get the authenticated user.
 			const user = ctx.meta.user;

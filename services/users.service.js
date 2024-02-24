@@ -90,6 +90,33 @@ module.exports = {
 				return { message: 'Successful login'};
 			}
 		},
+		logout: {
+			rest: 'POST /users/logout',
+			async handler(ctx) {
+				ctx.meta.$responseHeaders = {
+					'Set-Cookie': 'token=; HttpOnly; Path=/; Max-Age=0'
+				};
+				return { message: 'Successfully logged out' };
+			}
+		},
+
+		get: {
+			rest: 'GET /:id'
+		},
+		delete: {
+			rest: 'DELETE /delete',
+			params: {
+				id: 'string'
+			},
+			async handler(ctx) {
+				const {id} = ctx.params;
+				const deleted = await this.adapter.removeById(id);
+				if (!deleted) {
+					throw new MoleculerClientError('User not found', 404);
+				}
+				return { message: 'User deleted successfully' };
+			}
+		},
 		resolveToken: {
 			params: {
 				token: 'string'
@@ -108,23 +135,6 @@ module.exports = {
 					return this.getById(decoded.id);
 			}
 		},
-		get: {
-			rest: 'GET /:id'
-		},
-		delete: {
-			rest: 'DELETE /delete',
-			params: {
-				id: 'string'
-			},
-			async handler(ctx) {
-				const {id} = ctx.params;
-				const deleted = await this.adapter.removeById(id);
-				if (!deleted) {
-					throw new MoleculerClientError('User not found', 404);
-				}
-				return { message: 'User deleted successfully' };
-			}
-		}
 	},
 
 	methods: {
