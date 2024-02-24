@@ -24,7 +24,7 @@ module.exports = {
 				defaultValue: false
 			},
 			date: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATEONLY,
 				defaultValue: DataTypes.NOW
 			}
 		},
